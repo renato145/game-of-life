@@ -1,21 +1,9 @@
 @tailwind base;
 
 body {
-  @apply bg-gray-100 antialiased text-gray-900;
+  @apply bg-gray-100 antialiased text-gray-900 font-mono;
 }
 
-h1 {
-  @apply text-4xl;
-}
-h2 {
-  @apply text-3xl;
-}
-h3 {
-  @apply text-2xl;
-}
-h4 {
-  @apply text-xl;
-}
 a {
   @apply text-blue-600 transition duration-150;
 }
