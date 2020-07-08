@@ -1,3 +1,3 @@
 # Game of life
 
-Example of game of life with wasm.
+Example of game of life with wasm + react + tailwind.
