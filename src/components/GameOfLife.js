@@ -131,9 +131,9 @@ export const GameOfLife = () => {
 
   return (
     <div className="h-full flex justify-center items-center">
-      <div className="flex flex-col flex-wrap items-center p-4 bg-gray-400 rounded-lg">
+      <div className="flex flex-col flex-wrap items-center p-2 md:p-4 m-1 bg-gray-400 rounded-lg">
         <p className="text-gray-800 font-bold text-4xl">Game of Life</p>
-        <canvas ref={ref} className="mt-2" />
+        <canvas ref={ref} className="max-w-full mt-2" />
         <div>
           <button
             className="mt-2 px-1 py-1 bg-gray-700 hover:bg-gray-100 active:bg-gray-500 focus:shadow-none text-gray-100 hover:text-gray-900 shadow-lg"
