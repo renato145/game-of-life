@@ -1,3 +1,4 @@
+#[macro_use]
 mod utils;
 
 use js_sys::Math;
@@ -46,6 +47,10 @@ impl Universe {
         }
         count
     }
+
+    // fn size(&self) -> u32 {
+    //     self.width * self.height
+    // }
 }
 
 #[wasm_bindgen]
@@ -110,6 +115,39 @@ impl Universe {
                 *cell = Cell::Dead;
             }
         }
+    }
+
+    pub fn decrease_size(&mut self) {
+        if self.width < 4 {
+            return;
+        }
+        let mut i = 1;
+        let width = self.width;
+        let height = self.height;
+        self.cells
+            .retain(|_| ((i % width != 0) & (i < width * (height - 1)), i += 1).0);
+        self.width -= 1;
+        self.height -= 1;
+        log!("# Cells = {}", self.cells.len());
+    }
+
+    pub fn increase_size(&mut self) {
+        // Insert row
+        let mut new_row = vec![Cell::Dead; self.width as usize];
+        self.cells.append(&mut new_row);
+        self.height += 1;
+
+        // Insert column
+        let width = self.width as usize;
+        let mut i = self.cells.len();
+
+        while i >= width {
+            self.cells.insert(i, Cell::Dead);
+            i -= width;
+        }
+
+        self.width += 1;
+        log!("# Cells = {}", self.cells.len());
     }
 
     pub fn render(&self) -> String {

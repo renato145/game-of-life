@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useRef,
-  useCallback,
-  useMemo,
-  useEffect,
-} from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Universe, Cell } from "wasm-game-of-life";
 import { memory } from "wasm-game-of-life/wasm_game_of_life_bg";
 
@@ -15,11 +9,11 @@ const ALIVE_COLOR = "#444";
 
 export const GameOfLife = () => {
   const [universe, setUniverse] = useState();
-  const [width, setWidth] = useState();
-  const [height, setHeight] = useState();
   const [ctx, setCtx] = useState();
   const [isPlaying, setIsPlaying] = useState(false);
   const frameId = useRef(null);
+  const canvasRef = useRef();
+  const size = useRef({ width: 0, height: 0 });
 
   const ref = useCallback((canvas) => {
     const universe = Universe.new(50, 50, 0.5);
@@ -29,9 +23,10 @@ export const GameOfLife = () => {
     canvas.height = (CELL_SIZE + 1) * height + 1;
     canvas.width = (CELL_SIZE + 1) * width + 1;
     setUniverse(universe);
-    setWidth(width);
-    setHeight(height);
+    size.current.width = width;
+    size.current.height = height;
     setCtx(ctx);
+    canvasRef.current = canvas;
   }, []);
 
   useEffect(() => {
@@ -50,18 +45,66 @@ export const GameOfLife = () => {
       cancelAnimationFrame(frameId.current);
       frameId.current = null;
     }
-  }, [universe, ctx]);
+  }, [universe, ctx, renderLoop]);
 
   const handleRestartButton = useCallback(() => {
     if (!universe || !ctx) return;
     universe.restart(0.5);
-    if (frameId.current === null) {
-      drawGrid();
-      drawCells();
-    }
+    drawGrid();
+    drawCells();
   }, [universe, ctx]);
 
-  const getIndex = useCallback((row, col) => row * width + col, [width]);
+  const handleCanvasClick = useCallback(
+    (event) => {
+      if (!universe || !ctx) return;
+      const canvas = event.target;
+      const boundingRect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / boundingRect.width;
+      const scaleY = canvas.height / boundingRect.height;
+
+      const canvasLeft = (event.clientX - boundingRect.left) * scaleX;
+      const canvasTop = (event.clientY - boundingRect.top) * scaleY;
+
+      const row = Math.min(
+        Math.floor(canvasTop / (CELL_SIZE + 1)),
+        size.current.height - 1
+      );
+      const col = Math.min(
+        Math.floor(canvasLeft / (CELL_SIZE + 1)),
+        size.current.width - 1
+      );
+
+      universe.toogle_cell(row, col);
+
+      drawGrid();
+      drawCells();
+    },
+    [universe, ctx, drawGrid, drawCells]
+  );
+
+  const handleSize = useCallback(
+    (delta) => {
+      const wasPlaying = frameId.current !== null;
+      if (wasPlaying) handlePlayButton();
+      delta > 0 ? universe.increase_size() : universe.decrease_size();
+      const canvas = canvasRef.current;
+      const width = universe.width();
+      const height = universe.height();
+      canvas.height = (CELL_SIZE + 1) * height + 1;
+      canvas.width = (CELL_SIZE + 1) * width + 1;
+      size.current.width = width;
+      size.current.height = height;
+      if (wasPlaying) handlePlayButton();
+      drawGrid();
+      drawCells();
+    },
+    [universe]
+  );
+
+  const getIndex = useCallback(
+    (row, col) => row * size.current.width + col,
+    []
+  );
 
   const renderLoop = useCallback(() => {
     for (let i = 0; i < 1; i++) {
@@ -72,9 +115,10 @@ export const GameOfLife = () => {
     drawCells();
 
     frameId.current = requestAnimationFrame(() => renderLoop());
-  }, [universe]);
+  }, [universe, drawGrid, drawCells]);
 
   const drawGrid = useCallback(() => {
+    const { width, height } = size.current;
     ctx.beginPath();
     ctx.strokeStyle = GRID_COLOR;
 
@@ -91,12 +135,12 @@ export const GameOfLife = () => {
     }
 
     ctx.stroke();
-  }, [ctx, width, height]);
+  }, [ctx]);
 
   const drawCells = useCallback(() => {
+    const { width, height } = size.current;
     const cellsPtr = universe.cells();
     const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
-
     ctx.beginPath();
 
     // Alive cells.
@@ -136,15 +180,28 @@ export const GameOfLife = () => {
     }
 
     ctx.stroke();
-  }, [universe, ctx, width, height, getIndex]);
+  }, [universe, ctx, getIndex]);
 
   return (
     <div className="h-full flex justify-center items-center">
       <div className="flex flex-col flex-wrap items-center p-2 md:p-4 m-1 bg-gray-400 rounded-lg">
         <p className="text-gray-800 font-bold text-4xl">Game of Life</p>
-        <canvas ref={ref} className="max-w-full mt-2" />
-        <div className="mt-2">
-          <button onClick={() => handlePlayButton()}>
+        <canvas
+          ref={ref}
+          className="max-w-full md:max-w-md lg:max-w-lg mt-2 cursor-pointer"
+          onClick={handleCanvasClick}
+        />
+        <div className="mt-4 flex flex-wrap items-center">
+          <button onClick={() => handleSize(-1)}>
+            <svg
+              className="h-8 w-8 fill-current"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+            >
+              <path d="M 0 9 h17 v3 H3 v-3 z" />
+            </svg>
+          </button>
+          <button className="ml-2" onClick={() => handlePlayButton()}>
             <svg
               className="h-8 w-8 fill-current"
               xmlns="http://www.w3.org/2000/svg"
@@ -166,6 +223,29 @@ export const GameOfLife = () => {
               <path d="M14.66 15.66A8 8 0 1 1 17 10h-2a6 6 0 1 0-1.76 4.24l1.42 1.42zM12 10h8l-4 4-4-4z" />
             </svg>
           </button>
+          <button className="ml-2" onClick={() => handleSize(1)}>
+            <svg
+              className="h-8 w-8 p-1 fill-current"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z" />
+            </svg>
+          </button>
+          {/* <div className="ml-2 flex flex-col">
+            <button
+              className="h-4 py-0 text-xs font-semibold"
+              onClick={() => handleSize(-1)}
+            >
+              size -
+            </button>
+            <button
+              className="h-4 py-0 mt-1 text-xs font-semibold"
+              onClick={() => handleSize(1)}
+            >
+              size +
+            </button>
+          </div> */}
         </div>
         <p className="mt-4 break-words text-sm">
           Demo of game of life using wasm + react + tailwind{" "}
