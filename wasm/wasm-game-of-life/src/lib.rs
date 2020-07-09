@@ -102,6 +102,16 @@ impl Universe {
         }
     }
 
+    pub fn restart(&mut self, alive_p: f64) {
+        for cell in self.cells.iter_mut() {
+            if Math::random() > alive_p {
+                *cell = Cell::Alive;
+            } else {
+                *cell = Cell::Dead;
+            }
+        }
+    }
+
     pub fn render(&self) -> String {
         self.to_string()
     }
@@ -118,7 +128,7 @@ impl Universe {
         self.cells.as_ptr()
     }
 
-    pub fn toogle_cell(&mut self, row: u32, col:u32) {
+    pub fn toogle_cell(&mut self, row: u32, col: u32) {
         let idx = self.get_index(row, col);
         self.cells[idx].toogle();
     }

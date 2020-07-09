@@ -52,6 +52,15 @@ export const GameOfLife = () => {
     }
   }, [universe, ctx]);
 
+  const handleRestartButton = useCallback(() => {
+    if (!universe || !ctx) return;
+    universe.restart(0.5);
+    if (frameId.current === null) {
+      drawGrid();
+      drawCells();
+    }
+  }, [universe, ctx]);
+
   const getIndex = useCallback((row, col) => row * width + col, [width]);
 
   const renderLoop = useCallback(() => {
@@ -134,11 +143,8 @@ export const GameOfLife = () => {
       <div className="flex flex-col flex-wrap items-center p-2 md:p-4 m-1 bg-gray-400 rounded-lg">
         <p className="text-gray-800 font-bold text-4xl">Game of Life</p>
         <canvas ref={ref} className="max-w-full mt-2" />
-        <div>
-          <button
-            className="mt-2 px-1 py-1 bg-gray-700 hover:bg-gray-100 active:bg-gray-500 focus:shadow-none text-gray-100 hover:text-gray-900 shadow-lg"
-            onClick={() => handlePlayButton()}
-          >
+        <div className="mt-2">
+          <button onClick={() => handlePlayButton()}>
             <svg
               className="h-8 w-8 fill-current"
               xmlns="http://www.w3.org/2000/svg"
@@ -149,6 +155,15 @@ export const GameOfLife = () => {
               ) : (
                 <path d="M4 4l12 6-12 6z" />
               )}
+            </svg>
+          </button>
+          <button className="ml-2" onClick={() => handleRestartButton()}>
+            <svg
+              className="h-8 w-8 fill-current"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+            >
+              <path d="M14.66 15.66A8 8 0 1 1 17 10h-2a6 6 0 1 0-1.76 4.24l1.42 1.42zM12 10h8l-4 4-4-4z" />
             </svg>
           </button>
         </div>
