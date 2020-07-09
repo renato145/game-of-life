@@ -157,6 +157,7 @@ export const GameOfLife = () => {
           <a
             href="http://github.com/renato145/game-of-life/"
             target="_blank"
+            rel="noopener"
             className="font-semibold"
           >
             (source code)
